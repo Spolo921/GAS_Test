@@ -1,0 +1,53 @@
+﻿// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "BasicAttributeSet.h"
+
+#include "GameplayEffectExtension.h"
+#include "Net/UnrealNetwork.h"
+
+UBasicAttributeSet::UBasicAttributeSet()
+{
+	Health = 100.f;
+	MaxHealth = 100.f;
+	Stamina = 100.f;
+	MaxStamina = 100.f;
+}
+
+void UBasicAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBasicAttributeSet, Health, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBasicAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBasicAttributeSet, Stamina, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBasicAttributeSet, MaxStamina, COND_None, REPNOTIFY_Always);
+
+}
+
+void UBasicAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
+{
+	Super::PreAttributeBaseChange(Attribute, NewValue);
+	
+	if (Attribute == GetHealthAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0, GetMaxHealth());
+	}
+	else if (Attribute == GetStaminaAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0, GetMaxStamina());
+	}
+}
+
+void UBasicAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& EffectData)
+{
+	Super::PostGameplayEffectExecute(EffectData);
+	if (EffectData.EvaluatedData.Attribute == GetHealthAttribute())
+	{
+		SetHealth(GetHealth());
+	}
+	else if (EffectData.EvaluatedData.Attribute == GetStaminaAttribute())
+	{
+		SetStamina(GetStamina());
+	}
+}
+
